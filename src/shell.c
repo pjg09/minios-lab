@@ -294,7 +294,37 @@ static void cmd_kill_proc(const char *arg) {
 
     // Paso 6. unblock_alarm() al terminar.
 
-    (void)arg;  // silence unused while unimplemented
+    if (!arg || strlen(arg) == 0) {
+        printf("Uso: kill <pid>\n");
+        return;
+    }
+
+    int target = atoi(arg);
+    if (target <= 0) {
+        printf("PID inválido: %s\n", arg);
+        return;
+    }
+
+    block_alarm();
+
+    int found = 0;
+    for (int i = 0; i < process_count; i++) {
+        if (process_table[i].pid == target &&
+            process_table[i].state != PROC_TERMINATED) {
+            kill(target, SIGKILL);
+            // No llamamos waitpid aquí: scheduler_sigchld recogerá el zombie,
+            // reseteará current_running y despachará el siguiente proceso.
+            rq_remove(i);
+            printf("Proceso PID %d terminado.\n", target);
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found)
+        printf("Proceso PID %d no encontrado o ya terminado.\n", target);
+
+    unblock_alarm();
 }
 
 
@@ -320,25 +350,34 @@ static void cmd_kill_proc(const char *arg) {
 //     Avg espera:            230.5 ms
 // ============================================================
 static void cmd_stats(void) {
-    // Paso 1. block_alarm() para proteger la lectura.
+    block_alarm();
 
-    // Paso 2. Declarar acumuladores:
-    //         int active = 0, terminated = 0;
-    //         double total_cpu = 0, total_wait = 0;
-    //         int total_switches = 0;
+    int active = 0, terminated = 0, total_switches = 0;
+    double total_cpu = 0.0, total_wait = 0.0;
 
-    // Paso 3. Recorrer process_table sumando:
-    //         - Si state == PROC_TERMINATED: terminated++;  else active++;
-    //         - total_cpu += process_table[i].cpu_time_ms;
-    //         - total_wait += process_table[i].wait_time_ms;
-    //         - total_switches += process_table[i].context_switches;
+    for (int i = 0; i < process_count; i++) {
+        if (process_table[i].state == PROC_TERMINATED)
+            terminated++;
+        else
+            active++;
+        total_cpu     += process_table[i].cpu_time_ms;
+        total_wait    += process_table[i].wait_time_ms;
+        total_switches += process_table[i].context_switches;
+    }
 
-    // Paso 4. Imprimir las estadisticas con los campos arriba.
-    //         Usar timer_get_slice() para el slice actual.
-    //         Si process_count > 0, imprimir tambien los promedios
-    //         (total_cpu / process_count) y (total_wait / process_count).
+    printf("\n=== Estadísticas del Scheduler ===\n");
+    printf("  Procesos activos:      %d\n", active);
+    printf("  Procesos terminados:   %d\n", terminated);
+    printf("  Time slice actual:     %d ms\n", timer_get_slice());
+    printf("  CPU total acumulado:   %.1f ms\n", total_cpu);
+    printf("  Context switches:      %d\n", total_switches);
+    if (process_count > 0) {
+        printf("  Avg CPU por proceso:   %.1f ms\n", total_cpu / process_count);
+        printf("  Avg espera:            %.1f ms\n", total_wait / process_count);
+    }
+    printf("\n");
 
-    // Paso 5. unblock_alarm().
+    unblock_alarm();
 }
 
 

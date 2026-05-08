@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const WS_URL = 'ws://localhost:8080';
+const WS_URL = 'ws://localhost:8081';
 
 // Palette of visually distinct colors for processes. Avoids gray (TERMINATED)
 // and red (reserved for BLOCKED).

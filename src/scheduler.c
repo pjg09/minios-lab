@@ -47,6 +47,9 @@
 static volatile int current_running = -1;   // índice en process_table del proceso RUNNING, -1 si ninguno
 static volatile int scheduler_active = 0;   // 1 si el scheduler está corriendo
 
+// Timestamp de cuando cada proceso entró a la ready queue (para wait_time_ms)
+static struct timespec ready_since[MAX_PROCESSES];
+
 // ============================================================
 // Helpers ya implementados — NO los modifiques
 // ============================================================
@@ -215,6 +218,7 @@ int scheduler_create_process(const char *path, const char *arg) {
     }
 
     process_table[idx].state = PROC_READY;
+    clock_gettime(CLOCK_MONOTONIC, &ready_since[idx]);
     process_count++;
     rq_enqueue(idx);
     monitor_emit_created(pid, process_table[idx].name);
@@ -305,6 +309,7 @@ void scheduler_tick(int signum) {
     current->state = PROC_READY;
     current->context_switches++;
 
+    clock_gettime(CLOCK_MONOTONIC, &ready_since[current_running]);
     rq_enqueue(current_running);
 
     if (rq_is_empty()) {
@@ -315,6 +320,9 @@ void scheduler_tick(int signum) {
 
     int next_idx = rq_dequeue();
     pcb_t *next = &process_table[next_idx];
+    double waited = timespec_diff_ms(now, ready_since[next_idx]);
+    if (waited > 0.0)
+        next->wait_time_ms += waited;
     next->state = PROC_RUNNING;
     clock_gettime(CLOCK_MONOTONIC, &next->last_started);
     platform_resume_process(next->pid);
