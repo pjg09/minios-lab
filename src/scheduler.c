@@ -255,7 +255,21 @@ void scheduler_start(int slice_ms) {
     //         - timer_init(slice_ms, scheduler_tick);  // registra el handler
     //         - timer_start();                         // arranca setitimer
 
-    (void)slice_ms;  // silence unused while unimplemented
+    if (rq_is_empty()) {
+        printf("No hay procesos en la ready queue.\n");
+        return;
+    }
+
+    int idx = rq_dequeue();
+    process_table[idx].state = PROC_RUNNING;
+    clock_gettime(CLOCK_MONOTONIC, &process_table[idx].last_started);
+    current_running = idx;
+
+    platform_resume_process(process_table[idx].pid);
+
+    scheduler_active = 1;
+    timer_init(slice_ms, scheduler_tick);
+    timer_start();
 }
 
 
