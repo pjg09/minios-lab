@@ -18,3 +18,7 @@ node_modules/
 # Socket files
 /tmp/minios.sock
 /tmp/minios_*.sock
+
+# Claude Code
+CLAUDE.md
+.claude/
