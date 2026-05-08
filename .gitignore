@@ -22,3 +22,6 @@ node_modules/
 # Claude Code
 CLAUDE.md
 .claude/
+
+# Docs
+docs/
