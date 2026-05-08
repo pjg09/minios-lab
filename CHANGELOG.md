@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.3.0](https://github.com/pjg09/minios-lab/compare/v1.2.0...v1.3.0) (2026-05-08)
+
+
+### Features
+
+* implement scheduler_tick (SIGALRM handler, round-robin context switch) ([57f3c2e](https://github.com/pjg09/minios-lab/commit/57f3c2e82f1ea3d25c8e115efd2d0ac83aaa5397))
+
 # [1.2.0](https://github.com/pjg09/minios-lab/compare/v1.1.0...v1.2.0) (2026-05-08)
 
 
