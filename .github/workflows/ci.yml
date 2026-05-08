@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (warnings as errors)
+        run: make clean && make EXTRA_CFLAGS=-Werror
+
+      - name: Run unit tests
+        run: make test EXTRA_CFLAGS=-Werror

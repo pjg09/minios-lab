@@ -209,7 +209,22 @@ static void cmd_run(const char *path, const char *arg) {
     //         arrancar el scheduler con timer_get_slice() como slice:
     //         scheduler_start(timer_get_slice());
 
-    (void)path; (void)arg;  // silence unused while unimplemented
+    if (!path || strlen(path) == 0) {
+        printf("Uso: run <binario> [argumento]\n");
+        return;
+    }
+
+    if (access(path, X_OK) != 0) {
+        printf("Error: '%s' no encontrado o no es ejecutable.\n", path);
+        return;
+    }
+
+    int idx = scheduler_create_process(path, arg);
+    if (idx < 0)
+        return;
+
+    if (!scheduler_is_running() && !rq_is_empty())
+        scheduler_start(timer_get_slice());
 }
 
 
@@ -230,20 +245,20 @@ static void cmd_run(const char *path, const char *arg) {
 // rq_print() (que imprime algo como "Ready Queue: PID 1235 -> PID 1234").
 // ============================================================
 static void cmd_ps(void) {
-    // Paso 1. block_alarm() para proteger la lectura de process_table.
+    block_alarm();
 
-    // Paso 2. Si process_count == 0: imprimir "No hay procesos." y retornar
-    //         (recuerda hacer unblock_alarm antes de retornar!).
+    if (process_count == 0) {
+        printf("No hay procesos.\n");
+        unblock_alarm();
+        return;
+    }
 
-    // Paso 3. Imprimir un salto de linea + llamar pcb_print_table().
+    printf("\n");
+    pcb_print_table();
+    printf("\n");
+    rq_print();
 
-    // Paso 4. Imprimir otro salto de linea + llamar rq_print().
-
-    // Paso 5. unblock_alarm() al terminar.
-    //
-    // Pista: puedes implementar esto desde cero con tu propio formato
-    // si prefieres. Los campos del PCB estan en pcb_t (ver pcb.h):
-    //   pid, name, state, cpu_time_ms, wait_time_ms, context_switches
+    unblock_alarm();
 }
 
 

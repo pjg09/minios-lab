@@ -154,8 +154,76 @@ int scheduler_create_process(const char *path, const char *arg) {
     //         y si regs_valid, monitor_emit_registers(pid, pc, sp).
     //         Retornar idx.
 
-    (void)path; (void)arg;  // silence unused warnings while unimplemented
-    return -1;  // TODO: reemplazar por idx real
+    if (process_count >= MAX_PROCESSES) {
+        fprintf(stderr, "Error: process table llena (max %d)\n", MAX_PROCESSES);
+        return -1;
+    }
+
+    int status;
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return -1;
+    }
+
+    if (pid == 0) {
+        if (platform_uses_ptrace())
+            platform_trace_child();
+        if (arg)
+            execl(path, path, arg, NULL);
+        else
+            execl(path, path, NULL);
+        perror("execl");
+        _exit(1);
+    }
+
+    // Padre: esperar SIGTRAP post-exec si usamos ptrace
+    if (platform_uses_ptrace()) {
+        if (waitpid(pid, &status, 0) < 0) {
+            perror("waitpid (SIGTRAP)");
+            kill(pid, SIGKILL);
+            return -1;
+        }
+        if (!WIFSTOPPED(status)) {
+            fprintf(stderr, "Error: hijo no detenido tras exec\n");
+            kill(pid, SIGKILL);
+            return -1;
+        }
+    }
+
+    int idx = process_count;
+    char *path_copy = strdup(path);
+    char *short_name = basename(path_copy);
+    pcb_init(&process_table[idx], pid, short_name);
+    free(path_copy);
+
+    if (platform_uses_ptrace()) {
+        if (platform_get_registers(pid, &process_table[idx].registers) == 0)
+            process_table[idx].regs_valid = 1;
+        platform_detach(pid);
+    }
+
+    if (platform_stop_process(pid) < 0) {
+        perror("platform_stop_process");
+        kill(pid, SIGKILL);
+        return -1;
+    }
+
+    if (waitpid(pid, &status, WUNTRACED) < 0) {
+        perror("waitpid (WUNTRACED)");
+        return -1;
+    }
+
+    process_table[idx].state = PROC_READY;
+    process_count++;
+    rq_enqueue(idx);
+    monitor_emit_created(pid, process_table[idx].name);
+    if (process_table[idx].regs_valid)
+        monitor_emit_registers(pid,
+            process_table[idx].registers.program_counter,
+            process_table[idx].registers.stack_pointer);
+
+    return idx;
 }
 
 

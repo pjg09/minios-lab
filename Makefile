@@ -1,6 +1,6 @@
 UNAME := $(shell uname -s)
 CC = cc
-CFLAGS = -Wall -Wextra -g -std=c11
+CFLAGS = -Wall -Wextra -g -std=c11 $(EXTRA_CFLAGS)
 
 # Platform-specific source and flags
 ifeq ($(UNAME), Darwin)
@@ -18,6 +18,10 @@ SRCS = src/main.c src/pcb.c src/ready_queue.c src/scheduler.c src/timer.c src/sh
 PROG_SRCS = $(wildcard programs/*.c)
 PROG_BINS = $(patsubst programs/%.c, programs/bin/%, $(PROG_SRCS))
 
+# Unit test binary (no scheduler/shell/signals — pure data structure tests)
+TEST_BIN = tests/test_queue
+TEST_SRCS = tests/test_queue.c src/pcb.c src/ready_queue.c
+
 # === Targets ===
 
 all: minios programs
@@ -31,8 +35,14 @@ programs/bin/%: programs/%.c
 	@mkdir -p programs/bin
 	$(CC) $(CFLAGS) -o $@ $<
 
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
+$(TEST_BIN): $(TEST_SRCS)
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	rm -f minios
+	rm -f minios $(TEST_BIN)
 	rm -rf programs/bin
 
-.PHONY: all programs clean
+.PHONY: all programs test clean
