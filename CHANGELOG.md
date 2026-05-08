@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.5.0](https://github.com/pjg09/minios-lab/compare/v1.4.0...v1.5.0) (2026-05-08)
+
+
+### Features
+
+* implement cmd_kill_proc, cmd_stats, wait_time tracking and fix kill/sigchld race ([b7f87b3](https://github.com/pjg09/minios-lab/commit/b7f87b3bcbd995a73557eaeb4744ea36498978fd))
+
 # [1.4.0](https://github.com/pjg09/minios-lab/compare/v1.3.0...v1.4.0) (2026-05-08)
 
 
