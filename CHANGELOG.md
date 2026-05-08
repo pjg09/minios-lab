@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.2.0](https://github.com/pjg09/minios-lab/compare/v1.1.0...v1.2.0) (2026-05-08)
+
+
+### Features
+
+* implement scheduler_start (dequeue first process, SIGCONT, timer init) ([6a36685](https://github.com/pjg09/minios-lab/commit/6a366850c3ed49e2512f6c4564c5405bac34b45b))
+
 # [1.1.0](https://github.com/pjg09/minios-lab/compare/v1.0.0...v1.1.0) (2026-05-08)
 
 
