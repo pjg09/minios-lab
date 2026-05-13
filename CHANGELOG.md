@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/pjg09/minios-lab/compare/v1.5.1...v1.5.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* delete the queue tester ([dcf431a](https://github.com/pjg09/minios-lab/commit/dcf431a88f981616344f5783ddc9998d972229b4))
+
 ## [1.5.1](https://github.com/pjg09/minios-lab/compare/v1.5.0...v1.5.1) (2026-05-08)
 
 # [1.5.0](https://github.com/pjg09/minios-lab/compare/v1.4.0...v1.5.0) (2026-05-08)
